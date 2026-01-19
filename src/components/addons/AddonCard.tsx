@@ -1,7 +1,21 @@
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAddonStore } from '@/store/addonStore'
@@ -39,8 +53,7 @@ export function AddonCard({ addon, accountId, onRemove, loading }: AddonCardProp
   const isInLibrary = useMemo(() => {
     return Object.values(library).some(
       (savedAddon) =>
-        savedAddon.manifest.id === addon.manifest.id &&
-        savedAddon.installUrl === addon.transportUrl
+        savedAddon.manifest.id === addon.manifest.id && savedAddon.installUrl === addon.transportUrl
     )
   }, [library, addon.manifest.id, addon.transportUrl])
 
@@ -84,42 +97,38 @@ export function AddonCard({ addon, accountId, onRemove, loading }: AddonCardProp
   }
 
   return (
-    <Card>
+    <Card className="flex flex-col">
       <CardHeader>
         <div className="flex items-start gap-3">
           {addon.manifest.logo && (
-            <img
-              src={addon.manifest.logo}
-              alt={addon.manifest.name}
-              className="w-12 h-12 rounded object-contain bg-transparent"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none'
-              }}
-            />
+            <div className="bg-muted p-1.5 rounded-md">
+              <img
+                src={addon.manifest.logo}
+                alt={addon.manifest.name}
+                className="w-12 h-12 rounded object-contain"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                }}
+              />
+            </div>
           )}
           <div className="flex-1 min-w-0">
             <CardTitle className="text-lg truncate">
               {addon.manifest.name}
               {(addon.flags?.protected || addon.flags?.official) && (
-                <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">
                   {addon.flags?.protected ? 'Protected' : 'Official'}
                 </span>
               )}
             </CardTitle>
-            <CardDescription className="text-xs">
-              v{addon.manifest.version}
-            </CardDescription>
+            <CardDescription className="text-xs">v{addon.manifest.version}</CardDescription>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent>
-        <p className="text-sm text-muted-foreground line-clamp-2">
-          {addon.manifest.description}
-        </p>
-        <div className="mt-2 text-xs text-muted-foreground truncate">
-          {addon.transportUrl}
-        </div>
+      <CardContent className="flex-grow">
+        <p className="text-sm text-muted-foreground line-clamp-2">{addon.manifest.description}</p>
+        <div className="mt-2 text-xs text-muted-foreground truncate">{addon.transportUrl}</div>
       </CardContent>
 
       <CardFooter className="flex flex-col gap-2">
@@ -178,9 +187,7 @@ export function AddonCard({ addon, accountId, onRemove, loading }: AddonCardProp
               />
             </div>
 
-            {saveError && (
-              <p className="text-sm text-destructive">{saveError}</p>
-            )}
+            {saveError && <p className="text-sm text-destructive">{saveError}</p>}
           </div>
 
           <DialogFooter>
@@ -207,4 +214,3 @@ export function AddonCard({ addon, accountId, onRemove, loading }: AddonCardProp
     </Card>
   )
 }
-

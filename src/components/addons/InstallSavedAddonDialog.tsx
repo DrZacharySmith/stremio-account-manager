@@ -1,9 +1,15 @@
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { useAddonStore } from '@/store/addonStore'
 import { useAccountStore } from '@/store/accountStore'
-import { MergeStrategy } from '@/types/saved-addon'
+import { MergeStrategy, BulkResult } from '@/types/saved-addon'
 import { useState } from 'react'
 
 interface InstallSavedAddonDialogProps {
@@ -28,7 +34,7 @@ export function InstallSavedAddonDialog({
   const [strategy, setStrategy] = useState<MergeStrategy>('replace-matching')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<BulkResult | null>(null)
 
   const savedAddons = Object.values(library).sort((a, b) => a.name.localeCompare(b.name))
 
@@ -116,10 +122,8 @@ export function InstallSavedAddonDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Install from Library</DialogTitle>
-          <DialogDescription>
-            Select saved addons to install to this account
-          </DialogDescription>
+          <DialogTitle>Install Saved Addon</DialogTitle>
+          <DialogDescription>Select saved addons to install to this account</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -142,7 +146,10 @@ export function InstallSavedAddonDialog({
                 )}
                 {result.details[0].result.skipped.length > 0 && (
                   <span>
-                    {result.details[0].result.added.length > 0 || result.details[0].result.updated.length > 0 ? ', ' : ''}
+                    {result.details[0].result.added.length > 0 ||
+                    result.details[0].result.updated.length > 0
+                      ? ', '
+                      : ''}
                     Skipped {result.details[0].result.skipped.length} addon
                     {result.details[0].result.skipped.length !== 1 ? 's' : ''}
                   </span>

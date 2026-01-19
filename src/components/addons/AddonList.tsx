@@ -27,12 +27,7 @@ export function AddonList({ accountId }: AddonListProps) {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">Account not found</p>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate('/')}
-          className="mt-4"
-        >
+        <Button variant="ghost" size="icon" onClick={() => navigate('/')} className="mt-4">
           <ArrowLeft className="h-4 w-4" />
         </Button>
       </div>
@@ -43,12 +38,7 @@ export function AddonList({ accountId }: AddonListProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/')}
-            className="h-8 w-8"
-          >
+          <Button variant="ghost" size="icon" onClick={() => navigate('/')} className="h-8 w-8">
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
@@ -64,18 +54,15 @@ export function AddonList({ accountId }: AddonListProps) {
             disabled={addons.length === 0}
             variant="outline"
           >
-            <GripVertical className="h-4 w-4 mr-2" />
+            <GripVertical className="h-4 w-4" />
             Reorder Addons
           </Button>
-          <Button
-            onClick={() => setInstallFromLibraryOpen(true)}
-            variant="outline"
-          >
-            <Library className="h-4 w-4 mr-2" />
-            Install from Library
+          <Button onClick={() => openAddAddonDialog(accountId)} variant="outline">
+            Manually Install Addon
           </Button>
-          <Button onClick={() => openAddAddonDialog(accountId)}>
-            Install Addon
+          <Button onClick={() => setInstallFromLibraryOpen(true)}>
+            <Library className="h-4 w-4" />
+            Install Saved Addon
           </Button>
         </div>
       </div>
@@ -83,9 +70,7 @@ export function AddonList({ accountId }: AddonListProps) {
       {addons.length === 0 ? (
         <div className="text-center py-12 border border-dashed rounded-lg">
           <p className="text-muted-foreground mb-4">No addons installed</p>
-          <Button onClick={() => openAddAddonDialog(accountId)}>
-            Install Your First Addon
-          </Button>
+          <Button onClick={() => openAddAddonDialog(accountId)}>Install Your First Addon</Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

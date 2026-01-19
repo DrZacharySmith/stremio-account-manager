@@ -1,5 +1,12 @@
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAccounts } from '@/hooks/useAccounts'
@@ -13,7 +20,7 @@ export function AccountForm() {
   const editingAccount = useUIStore((state) => state.editingAccount)
   const { addAccountByAuthKey, addAccountByCredentials, updateAccount, loading } = useAccounts()
 
-  const [mode, setMode] = useState<'authKey' | 'credentials'>('authKey')
+  const [mode, setMode] = useState<'authKey' | 'credentials'>('credentials')
   const [name, setName] = useState('')
   const [authKey, setAuthKey] = useState('')
   const [email, setEmail] = useState('')
@@ -41,7 +48,7 @@ export function AccountForm() {
       }
     } else {
       // Reset defaults for add mode
-      setMode('authKey')
+      setMode('credentials')
       setName('')
       setAuthKey('')
       setEmail('')
@@ -64,9 +71,13 @@ export function AccountForm() {
         await updateAccount(editingAccount.id, {
           name: name.trim(),
           // Only pass auth details if they are provided/changed
-          authKey: mode === 'authKey' && authKey !== decrypt(editingAccount.authKey) ? authKey.trim() : undefined,
-          email: mode === 'credentials' && email !== editingAccount.email ? email.trim() : undefined,
-          password: mode === 'credentials' && password ? password : undefined
+          authKey:
+            mode === 'authKey' && authKey !== decrypt(editingAccount.authKey)
+              ? authKey.trim()
+              : undefined,
+          email:
+            mode === 'credentials' && email !== editingAccount.email ? email.trim() : undefined,
+          password: mode === 'credentials' && password ? password : undefined,
         })
       } else {
         // Add mode
@@ -86,7 +97,11 @@ export function AccountForm() {
       }
       handleClose()
     } catch (err) {
-      setError(err instanceof Error ? err.message : `Failed to ${editingAccount ? 'update' : 'add'} account`)
+      setError(
+        err instanceof Error
+          ? err.message
+          : `Failed to ${editingAccount ? 'update' : 'add'} account`
+      )
     }
   }
 
@@ -108,19 +123,20 @@ export function AccountForm() {
           <div className="flex gap-2 border-b pb-2">
             <Button
               type="button"
-              variant={mode === 'authKey' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setMode('authKey')}
-            >
-              Auth Key
-            </Button>
-            <Button
-              type="button"
               variant={mode === 'credentials' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setMode('credentials')}
             >
               Email & Password
+              {!isEditing && <span className="ml-2 text-xs opacity-75">(Recommended)</span>}
+            </Button>
+            <Button
+              type="button"
+              variant={mode === 'authKey' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setMode('authKey')}
+            >
+              Auth Key
             </Button>
           </div>
 
@@ -142,11 +158,15 @@ export function AccountForm() {
                 type="password"
                 value={authKey}
                 onChange={(e) => setAuthKey(e.target.value)}
-                placeholder={isEditing ? "Leave blank to keep unchanged" : "Enter your Stremio auth key"}
+                placeholder={
+                  isEditing ? 'Leave blank to keep unchanged' : 'Enter your Stremio auth key'
+                }
                 required={!isEditing}
               />
               <p className="text-xs text-muted-foreground">
-                Find your auth key in Stremio settings
+                <a href="/faq" target="_blank" className="text-primary hover:underline">
+                  How to find your auth key
+                </a>
               </p>
             </div>
           ) : (
@@ -170,7 +190,7 @@ export function AccountForm() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={isEditing ? "Leave blank to keep unchanged" : "Enter your password"}
+                  placeholder={isEditing ? 'Leave blank to keep unchanged' : 'Enter your password'}
                   required={!isEditing}
                 />
               </div>
@@ -188,7 +208,13 @@ export function AccountForm() {
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'Update Account' : 'Add Account')}
+              {loading
+                ? isEditing
+                  ? 'Updating...'
+                  : 'Adding...'
+                : isEditing
+                  ? 'Update Account'
+                  : 'Add Account'}
             </Button>
           </DialogFooter>
         </form>

@@ -21,11 +21,7 @@ interface AccountCardProps {
   onToggleSelect?: (accountId: string) => void
 }
 
-export function AccountCard({
-  account,
-  isSelected = false,
-  onToggleSelect,
-}: AccountCardProps) {
+export function AccountCard({ account, isSelected = false, onToggleSelect }: AccountCardProps) {
   const navigate = useNavigate()
   const { removeAccount, syncAccount, loading } = useAccounts()
   const openAddAccountDialog = useUIStore((state) => state.openAddAccountDialog)
@@ -61,10 +57,7 @@ export function AccountCard({
   const lastSyncText = new Date(account.lastSync).toLocaleString()
 
   return (
-    <Card
-      className={`hover:shadow-lg transition-shadow ${isSelected ? 'ring-2 ring-primary' : ''
-        }`}
-    >
+    <Card className={`flex flex-col ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -115,7 +108,7 @@ export function AccountCard({
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="flex-grow">
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-sm">
             <span className="text-muted-foreground">Addons:</span>
@@ -126,9 +119,7 @@ export function AccountCard({
             <span className="text-sm">{lastSyncText}</span>
           </div>
           {account.status === 'error' && (
-            <div className="text-sm text-destructive">
-              Sync failed - check credentials
-            </div>
+            <div className="text-sm text-destructive">Sync failed - check credentials</div>
           )}
         </div>
       </CardContent>
@@ -158,4 +149,3 @@ export function AccountCard({
     </Card>
   )
 }
-

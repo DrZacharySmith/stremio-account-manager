@@ -5,6 +5,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useAddonStore } from '@/store/addonStore'
@@ -41,19 +42,19 @@ export function SavedAddonCard({ savedAddon }: SavedAddonCardProps) {
 
   return (
     <>
-      <Card className="hover:shadow-lg transition-shadow flex flex-col">
+      <Card className="flex flex-col">
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <CardTitle className="text-lg line-clamp-2">{savedAddon.name}</CardTitle>
               {savedAddon.sourceType === 'cloned-from-account' && (
-                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 shrink-0">
+                <span className="text-xs px-2 py-1 rounded-md bg-primary/10 text-primary shrink-0">
                   Cloned
                 </span>
               )}
             </div>
             <DropdownMenu>
-              <DropdownMenuTrigger className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors shrink-0">
+              <DropdownMenuTrigger className="p-1 hover:bg-accent rounded transition-colors duration-150 shrink-0">
                 <MoreVertical className="h-5 w-5 text-muted-foreground" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -61,6 +62,7 @@ export function SavedAddonCard({ savedAddon }: SavedAddonCardProps) {
                   <Pencil className="h-4 w-4 mr-2" />
                   Edit
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem destructive onClick={handleDelete}>
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete
@@ -84,15 +86,13 @@ export function SavedAddonCard({ savedAddon }: SavedAddonCardProps) {
                   }}
                 />
               ) : (
-                <div className="w-10 h-10 rounded bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">📦</span>
+                <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs text-muted-foreground">📦</span>
                 </div>
               )}
               <div className="text-sm min-w-0">
                 <p className="font-medium truncate">{savedAddon.manifest.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  v{savedAddon.manifest.version}
-                </p>
+                <p className="text-xs text-muted-foreground">v{savedAddon.manifest.version}</p>
               </div>
             </div>
 
@@ -102,7 +102,7 @@ export function SavedAddonCard({ savedAddon }: SavedAddonCardProps) {
                 {savedAddon.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                    className="text-xs px-2 py-1 rounded-md bg-muted text-muted-foreground"
                   >
                     {tag}
                   </span>
@@ -113,9 +113,7 @@ export function SavedAddonCard({ savedAddon }: SavedAddonCardProps) {
             {/* Dates */}
             <div className="text-xs text-muted-foreground space-y-1">
               <p>Created: {formatDate(savedAddon.createdAt)}</p>
-              {savedAddon.lastUsed && (
-                <p>Last used: {formatDate(savedAddon.lastUsed)}</p>
-              )}
+              {savedAddon.lastUsed && <p>Last used: {formatDate(savedAddon.lastUsed)}</p>}
             </div>
           </div>
         </CardContent>
@@ -129,16 +127,13 @@ export function SavedAddonCard({ savedAddon }: SavedAddonCardProps) {
             <button
               type="button"
               onClick={() => setShowDetails(false)}
-              className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="p-1 rounded-full hover:bg-accent transition-colors duration-150"
               aria-label="Close"
             >
               <X className="h-5 w-5 text-muted-foreground" />
             </button>
           </DialogHeader>
-          <SavedAddonDetails
-            savedAddon={savedAddon}
-            onClose={() => setShowDetails(false)}
-          />
+          <SavedAddonDetails savedAddon={savedAddon} onClose={() => setShowDetails(false)} />
         </DialogContent>
       </Dialog>
 
@@ -150,7 +145,9 @@ export function SavedAddonCard({ savedAddon }: SavedAddonCardProps) {
         description={
           <>
             <p>Are you sure you want to delete "{savedAddon.name}"?</p>
-            <p className="font-semibold">This will NOT remove it from accounts where it's already installed.</p>
+            <p className="font-semibold">
+              This will NOT remove it from accounts where it's already installed.
+            </p>
           </>
         }
         confirmText="Delete"
