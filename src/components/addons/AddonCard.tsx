@@ -115,84 +115,86 @@ export function AddonCard({ addon, accountId, onRemove, loading }: AddonCardProp
   }
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader>
-        <div className="flex items-start gap-3">
-          {addon.manifest.logo && (
-            <div className="bg-muted p-1.5 rounded-md">
-              <img
-                src={addon.manifest.logo}
-                alt={addon.manifest.name}
-                className="w-12 h-12 rounded object-contain"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none'
-                }}
-              />
+    <>
+      <Card className="flex flex-col">
+        <CardHeader>
+          <div className="flex items-start gap-3">
+            {addon.manifest.logo && (
+              <div className="bg-muted p-1.5 rounded-md">
+                <img
+                  src={addon.manifest.logo}
+                  alt={addon.manifest.name}
+                  className="w-12 h-12 rounded object-contain"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-lg truncate">
+                {addon.manifest.name}
+                {(addon.flags?.protected || addon.flags?.official) && (
+                  <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">
+                    {addon.flags?.protected ? 'Protected' : 'Official'}
+                  </span>
+                )}
+              </CardTitle>
+              <CardDescription className="text-xs">v{addon.manifest.version}</CardDescription>
             </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <CardTitle className="text-lg truncate">
-              {addon.manifest.name}
-              {(addon.flags?.protected || addon.flags?.official) && (
-                <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">
-                  {addon.flags?.protected ? 'Protected' : 'Official'}
-                </span>
-              )}
-            </CardTitle>
-            <CardDescription className="text-xs">v{addon.manifest.version}</CardDescription>
           </div>
-        </div>
-      </CardHeader>
+        </CardHeader>
 
-      <CardContent className="flex-grow">
-        <p className="text-sm text-muted-foreground line-clamp-2">{addon.manifest.description}</p>
-        <div className="mt-4 flex items-center gap-2">
-          <button
-            onClick={handleCopyUrl}
-            className="text-xs text-muted-foreground truncate font-mono bg-muted/50 px-2 py-1.5 rounded flex-1 flex items-center justify-between gap-2 hover:bg-muted transition-colors group"
-            title="Copy URL"
-          >
-            <span className="truncate">
-              {isPrivacyModeEnabled ? maskUrl(addon.transportUrl) : addon.transportUrl}
-            </span>
-            <Copy className="h-3.5 w-3.5 shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" />
-          </button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 shrink-0"
-            onClick={handleOpenInStremio}
-            title="Open in Stremio"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardContent>
+        <CardContent className="flex-grow">
+          <p className="text-sm text-muted-foreground line-clamp-2">{addon.manifest.description}</p>
+          <div className="mt-4 flex items-center gap-2">
+            <button
+              onClick={handleCopyUrl}
+              className="text-xs text-muted-foreground truncate font-mono bg-muted/50 px-2 py-1.5 rounded flex-1 flex items-center justify-between gap-2 hover:bg-muted transition-colors group"
+              title="Copy URL"
+            >
+              <span className="truncate">
+                {isPrivacyModeEnabled ? maskUrl(addon.transportUrl) : addon.transportUrl}
+              </span>
+              <Copy className="h-3.5 w-3.5 shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" />
+            </button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={handleOpenInStremio}
+              title="Open in Stremio"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
 
-      <CardFooter className="flex flex-col gap-2">
-        {canSaveToLibrary && (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={openSaveModal}
-            disabled={loading || storeLoading || saving}
-            className="w-full"
-          >
-            Save to Library
-          </Button>
-        )}
-        {!isProtected && (
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleRemove}
-            disabled={loading}
-            className="w-full"
-          >
-            Remove
-          </Button>
-        )}
-      </CardFooter>
+        <CardFooter className="flex flex-col gap-2">
+          {canSaveToLibrary && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={openSaveModal}
+              disabled={loading || storeLoading || saving}
+              className="w-full"
+            >
+              Save to Library
+            </Button>
+          )}
+          {!isProtected && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleRemove}
+              disabled={loading}
+              className="w-full"
+            >
+              Remove
+            </Button>
+          )}
+        </CardFooter>
+      </Card>
 
       {/* Save to Library Modal */}
       <Dialog open={showSaveModal} onOpenChange={(open) => !open && closeSaveModal()}>
@@ -249,6 +251,6 @@ export function AddonCard({ addon, accountId, onRemove, loading }: AddonCardProp
         isDestructive={true}
         onConfirm={handleConfirmRemove}
       />
-    </Card>
+    </>
   )
 }

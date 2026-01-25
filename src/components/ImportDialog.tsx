@@ -1,15 +1,24 @@
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { useUIStore } from '@/store/uiStore'
 import { useAccountStore } from '@/store/accountStore'
+import { useAddonStore } from '@/store/addonStore'
 
 export function ImportDialog() {
   const isOpen = useUIStore((state) => state.isImportDialogOpen)
   const closeDialog = useUIStore((state) => state.closeImportDialog)
   const importAccounts = useAccountStore((state) => state.importAccounts)
   const loading = useAccountStore((state) => state.loading)
+  const initializeAddonStore = useAddonStore((state) => state.initialize)
 
   const [file, setFile] = useState<File | null>(null)
   const [error, setError] = useState('')
@@ -42,6 +51,8 @@ export function ImportDialog() {
     try {
       const text = await file.text()
       await importAccounts(text)
+      // Refresh the addon store to pick up any imported saved addons
+      await initializeAddonStore()
       handleClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to import accounts')
@@ -89,8 +100,8 @@ export function ImportDialog() {
           )}
 
           <div className="bg-muted px-4 py-3 rounded-md text-sm">
-            <strong>Note:</strong> Imported accounts will be added to your existing
-            accounts. Duplicates will not be detected.
+            <strong>Note:</strong> Imported accounts will be added to your existing accounts.
+            Duplicates will not be detected.
           </div>
         </div>
 

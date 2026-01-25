@@ -7,13 +7,25 @@ import {
 import { loginWithCredentials } from '@/api/auth'
 import { decrypt, encrypt } from '@/lib/encryption'
 import { accountExportSchema } from '@/lib/validation'
+import { loadAddonLibrary, saveAddonLibrary } from '@/lib/addon-storage'
 import { toast } from '@/hooks/use-toast'
 import { AccountExport, StremioAccount } from '@/types/account'
 import { AddonDescriptor } from '@/types/addon'
+import { SavedAddon } from '@/types/saved-addon'
 import localforage from 'localforage'
 import { create } from 'zustand'
 
 const STORAGE_KEY = 'stremio-manager:accounts'
+
+// Helper function to sanitize addon manifests by converting null to undefined
+const sanitizeAddonManifest = (manifest: AddonDescriptor['manifest']) => {
+  return {
+    ...manifest,
+    logo: manifest.logo ?? undefined,
+    background: manifest.background ?? undefined,
+    idPrefixes: manifest.idPrefixes ?? undefined,
+  }
+}
 
 interface AccountStore {
   accounts: StremioAccount[]
@@ -30,7 +42,7 @@ interface AccountStore {
   installAddonToAccount: (accountId: string, addonUrl: string) => Promise<void>
   removeAddonFromAccount: (accountId: string, addonId: string) => Promise<void>
   reorderAddons: (accountId: string, newOrder: AddonDescriptor[]) => Promise<void>
-  exportAccounts: (includeCredentials: boolean) => string
+  exportAccounts: (includeCredentials: boolean) => Promise<string>
   importAccounts: (json: string) => Promise<void>
   updateAccount: (
     id: string,
@@ -67,11 +79,17 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
       // Validate auth key by fetching addons
       const addons = await getAddons(authKey)
 
+      // Normalize addon manifests
+      const normalizedAddons = addons.map((addon) => ({
+        ...addon,
+        manifest: sanitizeAddonManifest(addon.manifest),
+      }))
+
       const account: StremioAccount = {
         id: crypto.randomUUID(),
         name,
         authKey: encrypt(authKey),
-        addons,
+        addons: normalizedAddons,
         lastSync: new Date(),
         status: 'active',
       }
@@ -99,13 +117,19 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
       // Fetch addons
       const addons = await getAddons(response.authKey)
 
+      // Normalize addon manifests
+      const normalizedAddons = addons.map((addon) => ({
+        ...addon,
+        manifest: sanitizeAddonManifest(addon.manifest),
+      }))
+
       const account: StremioAccount = {
         id: crypto.randomUUID(),
         name: name || email,
         email,
         authKey: encrypt(response.authKey),
         password: encrypt(password),
-        addons,
+        addons: normalizedAddons,
         lastSync: new Date(),
         status: 'active',
       }
@@ -141,9 +165,15 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
       const authKey = decrypt(account.authKey)
       const addons = await getAddons(authKey)
 
+      // Normalize addon manifests
+      const normalizedAddons = addons.map((addon) => ({
+        ...addon,
+        manifest: sanitizeAddonManifest(addon.manifest),
+      }))
+
       const updatedAccount = {
         ...account,
-        addons,
+        addons: normalizedAddons,
         lastSync: new Date(),
         status: 'active' as const,
       }
@@ -185,9 +215,15 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
         const authKey = decrypt(account.authKey)
         const addons = await getAddons(authKey)
 
+        // Normalize addon manifests
+        const normalizedAddons = addons.map((addon) => ({
+          ...addon,
+          manifest: sanitizeAddonManifest(addon.manifest),
+        }))
+
         const updatedAccount = {
           ...account,
-          addons,
+          addons: normalizedAddons,
           lastSync: new Date(),
           status: 'active' as const,
         }
@@ -228,9 +264,15 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
       const authKey = decrypt(account.authKey)
       const updatedAddons = await apiInstallAddon(authKey, addonUrl)
 
+      // Normalize addon manifests
+      const normalizedAddons = updatedAddons.map((addon) => ({
+        ...addon,
+        manifest: sanitizeAddonManifest(addon.manifest),
+      }))
+
       const updatedAccount = {
         ...account,
-        addons: updatedAddons,
+        addons: normalizedAddons,
         lastSync: new Date(),
       }
 
@@ -258,9 +300,15 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
       const authKey = decrypt(account.authKey)
       const updatedAddons = await apiRemoveAddon(authKey, addonId)
 
+      // Normalize addon manifests
+      const normalizedAddons = updatedAddons.map((addon) => ({
+        ...addon,
+        manifest: sanitizeAddonManifest(addon.manifest),
+      }))
+
       const updatedAccount = {
         ...account,
-        addons: updatedAddons,
+        addons: normalizedAddons,
         lastSync: new Date(),
       }
 
@@ -307,20 +355,55 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
     }
   },
 
-  exportAccounts: (includeCredentials) => {
-    const data: AccountExport = {
-      version: '1.0.0',
-      exportedAt: new Date().toISOString(),
-      accounts: get().accounts.map((acc) => ({
-        name: acc.name,
-        email: acc.email,
-        authKey: includeCredentials ? decrypt(acc.authKey) : undefined,
-        password: includeCredentials && acc.password ? decrypt(acc.password) : undefined,
-        addons: acc.addons,
-      })),
-    }
+  exportAccounts: async (includeCredentials) => {
+    try {
+      // Load saved addon library
+      const addonLibrary = await loadAddonLibrary()
+      const savedAddons = Object.values(addonLibrary).map((addon) => ({
+        ...addon,
+        manifest: sanitizeAddonManifest(addon.manifest),
+        createdAt: addon.createdAt.toISOString(),
+        updatedAt: addon.updatedAt.toISOString(),
+        lastUsed: addon.lastUsed?.toISOString(),
+      }))
 
-    return JSON.stringify(data, null, 2)
+      const data: AccountExport = {
+        version: '1.0.0',
+        exportedAt: new Date().toISOString(),
+        accounts: get().accounts.map((acc) => ({
+          name: acc.name,
+          email: acc.email,
+          authKey: includeCredentials ? decrypt(acc.authKey) : undefined,
+          password: includeCredentials && acc.password ? decrypt(acc.password) : undefined,
+          addons: acc.addons.map((addon) => ({
+            ...addon,
+            manifest: sanitizeAddonManifest(addon.manifest),
+          })),
+        })),
+        savedAddons: savedAddons.length > 0 ? savedAddons : undefined,
+      }
+
+      return JSON.stringify(data, null, 2)
+    } catch (error) {
+      console.error('Failed to load addon library during export:', error)
+      // Fallback: export without saved addons
+      const data: AccountExport = {
+        version: '1.0.0',
+        exportedAt: new Date().toISOString(),
+        accounts: get().accounts.map((acc) => ({
+          name: acc.name,
+          email: acc.email,
+          authKey: includeCredentials ? decrypt(acc.authKey) : undefined,
+          password: includeCredentials && acc.password ? decrypt(acc.password) : undefined,
+          addons: acc.addons.map((addon) => ({
+            ...addon,
+            manifest: sanitizeAddonManifest(addon.manifest),
+          })),
+        })),
+      }
+
+      return JSON.stringify(data, null, 2)
+    }
   },
 
   importAccounts: async (json) => {
@@ -337,7 +420,10 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
         email: acc.email,
         authKey: acc.authKey ? encrypt(acc.authKey) : '',
         password: acc.password ? encrypt(acc.password) : undefined,
-        addons: acc.addons,
+        addons: acc.addons.map((addon) => ({
+          ...addon,
+          manifest: sanitizeAddonManifest(addon.manifest),
+        })),
         lastSync: new Date(),
         status: 'active',
       }))
@@ -347,6 +433,38 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
       set({ accounts })
 
       await localforage.setItem(STORAGE_KEY, accounts)
+
+      // Import saved addons if present
+      if (validated.savedAddons && validated.savedAddons.length > 0) {
+        try {
+          const existingLibrary = await loadAddonLibrary()
+
+          // Merge saved addons with existing library (generate new IDs to avoid conflicts)
+          const newLibrary = { ...existingLibrary }
+          for (const savedAddon of validated.savedAddons) {
+            const newId = crypto.randomUUID()
+            const addon: SavedAddon = {
+              ...savedAddon,
+              id: newId,
+              manifest: sanitizeAddonManifest(savedAddon.manifest),
+              createdAt: new Date(savedAddon.createdAt),
+              updatedAt: new Date(savedAddon.updatedAt),
+              lastUsed: savedAddon.lastUsed ? new Date(savedAddon.lastUsed) : undefined,
+            }
+            newLibrary[newId] = addon
+          }
+
+          await saveAddonLibrary(newLibrary)
+        } catch (error) {
+          console.error('Failed to import saved addons:', error)
+          // Don't fail the entire import if saved addons fail
+          toast({
+            variant: 'destructive',
+            title: 'Warning',
+            description: 'Accounts imported successfully, but saved addons failed to import.',
+          })
+        }
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to import accounts'
       set({ error: message })
@@ -383,7 +501,14 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
 
         // Fetch addons with new key
         const addons = await getAddons(authKey)
-        updatedAccount.addons = addons
+
+        // Normalize addon manifests
+        const normalizedAddons = addons.map((addon) => ({
+          ...addon,
+          manifest: sanitizeAddonManifest(addon.manifest),
+        }))
+
+        updatedAccount.addons = normalizedAddons
         updatedAccount.status = 'active'
         updatedAccount.lastSync = new Date()
       }

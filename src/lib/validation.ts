@@ -5,60 +5,82 @@ export const addonManifestSchema = z.object({
   name: z.string(),
   version: z.string(),
   description: z.string(),
-  logo: z.string().optional(),
-  background: z.string().optional(),
+  logo: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((v) => v ?? undefined),
+  background: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((v) => v ?? undefined),
   types: z.array(z.string()).optional(),
   catalogs: z.array(z.unknown()).optional(),
   resources: z.array(z.unknown()).optional(),
-  idPrefixes: z.array(z.string()).optional(),
-  behaviorHints: z.object({
-    adult: z.boolean().optional(),
-    p2p: z.boolean().optional(),
-    configurable: z.boolean().optional(),
-    configurationRequired: z.boolean().optional(),
-  }).optional(),
+  idPrefixes: z
+    .array(z.string())
+    .nullable()
+    .optional()
+    .transform((v) => v ?? undefined),
+  behaviorHints: z
+    .object({
+      adult: z.boolean().optional(),
+      p2p: z.boolean().optional(),
+      configurable: z.boolean().optional(),
+      configurationRequired: z.boolean().optional(),
+    })
+    .optional(),
 })
 
 export const addonDescriptorSchema = z.object({
   transportUrl: z.string().url(),
   transportName: z.string().optional(),
   manifest: addonManifestSchema,
-  flags: z.object({
-    official: z.boolean().optional(),
-    protected: z.boolean().optional(),
-  }).optional(),
+  flags: z
+    .object({
+      official: z.boolean().optional(),
+      protected: z.boolean().optional(),
+    })
+    .optional(),
+})
+
+export const savedAddonSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  installUrl: z.string(),
+  manifest: addonManifestSchema,
+  tags: z.array(z.string()),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  lastUsed: z.string().optional(),
+  sourceType: z.enum(['manual', 'cloned-from-account']),
+  sourceAccountId: z.string().optional(),
+  health: z
+    .object({
+      isOnline: z.boolean(),
+      lastChecked: z.number(),
+    })
+    .optional(),
 })
 
 export const accountExportSchema = z.object({
   version: z.string(),
   exportedAt: z.string(),
-  accounts: z.array(z.object({
-    name: z.string(),
-    email: z.string().email().optional(),
-    authKey: z.string().optional(),
-    password: z.string().optional(),
-    addons: z.array(addonDescriptorSchema),
-    debridConfigType: z.enum(['global', 'group', 'custom']).optional(),
-    debridGroupId: z.string().optional(),
-  })),
-  debridConfig: z.object({
-    globalKeys: z.record(z.string(), z.string().nullable()),
-    keys: z.record(z.string(), z.object({
-      id: z.string(),
-      service: z.string(),
-      apiKey: z.string(),
+  accounts: z.array(
+    z.object({
       name: z.string(),
-      createdAt: z.string(),
-      lastUsed: z.string().optional(),
-    })),
-    groups: z.record(z.string(), z.object({
-      id: z.string(),
-      name: z.string(),
-      debridKeys: z.record(z.string(), z.string().nullable()),
-      accountIds: z.array(z.string()),
-      createdAt: z.string(),
-    })),
-  }).optional(),
+      email: z.string().email().optional(),
+      authKey: z.string().optional(),
+      password: z.string().optional(),
+      addons: z.array(addonDescriptorSchema),
+    })
+  ),
+  savedAddons: z.array(savedAddonSchema).optional(),
+  // Legacy fields for backwards compatibility - will be ignored on import
+  debridConfig: z.any().optional(),
+  debridConfigType: z.any().optional(),
+  debridGroupId: z.any().optional(),
 })
 
 export const loginCredentialsSchema = z.object({
@@ -68,7 +90,12 @@ export const loginCredentialsSchema = z.object({
 
 // Debrid validation schemas
 
-export const debridServiceSchema = z.enum(['real-debrid', 'all-debrid', 'premiumize', 'debrid-link'])
+export const debridServiceSchema = z.enum([
+  'real-debrid',
+  'all-debrid',
+  'premiumize',
+  'debrid-link',
+])
 
 export const debridConfigTypeSchema = z.enum(['global', 'group', 'custom'])
 
@@ -78,10 +105,13 @@ const allDebridKeyRegex = /^[a-zA-Z0-9_-]{40,}$/
 const premiumizeKeyRegex = /^[a-zA-Z0-9]{32,}$/
 const debridLinkKeyRegex = /^[a-zA-Z0-9]{32,}$/
 
-export const debridApiKeySchema = z.string().min(1, 'API key is required').refine((key) => {
-  // Basic validation - at least some content
-  return key.trim().length > 0
-}, 'API key cannot be empty')
+export const debridApiKeySchema = z
+  .string()
+  .min(1, 'API key is required')
+  .refine((key) => {
+    // Basic validation - at least some content
+    return key.trim().length > 0
+  }, 'API key cannot be empty')
 
 export const validateDebridApiKey = (service: string, apiKey: string): boolean => {
   switch (service) {

@@ -1,4 +1,5 @@
 import { AddonDescriptor } from './addon'
+import { SavedAddon } from './saved-addon'
 
 export type AccountStatus = 'active' | 'error'
 
@@ -18,6 +19,12 @@ export interface AccountCredentials {
   password: string
 }
 
+export interface SavedAddonExport extends Omit<SavedAddon, 'createdAt' | 'updatedAt' | 'lastUsed'> {
+  createdAt: string
+  updatedAt: string
+  lastUsed?: string
+}
+
 export interface AccountExport {
   version: string
   exportedAt: string
@@ -28,4 +35,5 @@ export interface AccountExport {
     password?: string // User decides whether to include
     addons: AddonDescriptor[]
   }>
+  savedAddons?: SavedAddonExport[]
 }
