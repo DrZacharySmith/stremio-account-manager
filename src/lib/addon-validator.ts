@@ -1,77 +1,8 @@
-import { AddonDescriptor } from '@/types/addon'
-import { fetchAddonManifest } from '@/api/addons'
-
 /**
  * Addon Validator
  *
  * Provides validation and fetching of addon manifests for saved addons.
  */
-
-export interface ValidationResult {
-  valid: boolean
-  error?: string
-  manifest?: AddonDescriptor
-}
-
-/**
- * Validate and fetch manifest from an addon URL
- */
-export async function validateAddonUrl(url: string): Promise<ValidationResult> {
-  try {
-    // Basic URL validation
-    if (!url || typeof url !== 'string') {
-      return {
-        valid: false,
-        error: 'URL is required',
-      }
-    }
-
-    // Check if it's a valid URL
-    try {
-      new URL(url)
-    } catch {
-      return {
-        valid: false,
-        error: 'Invalid URL format',
-      }
-    }
-
-    // Fetch the manifest
-    const manifest = await fetchAddonManifest(url)
-
-    // Validate manifest structure
-    if (!manifest || !manifest.manifest) {
-      return {
-        valid: false,
-        error: 'Invalid addon manifest',
-      }
-    }
-
-    if (!manifest.manifest.id) {
-      return {
-        valid: false,
-        error: 'Addon manifest missing required field: id',
-      }
-    }
-
-    if (!manifest.manifest.name) {
-      return {
-        valid: false,
-        error: 'Addon manifest missing required field: name',
-      }
-    }
-
-    return {
-      valid: true,
-      manifest,
-    }
-  } catch (error) {
-    return {
-      valid: false,
-      error: error instanceof Error ? error.message : 'Failed to fetch addon manifest',
-    }
-  }
-}
 
 /**
  * Validate saved addon name

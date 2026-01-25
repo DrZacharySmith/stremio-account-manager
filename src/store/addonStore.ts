@@ -7,7 +7,7 @@ import {
   saveAccountAddonStates,
   saveAddonLibrary,
 } from '@/lib/addon-storage'
-import { normalizeTagName, validateAddonUrl } from '@/lib/addon-validator'
+import { normalizeTagName } from '@/lib/addon-validator'
 import { checkAllAddonsHealth } from '@/lib/addon-health'
 import { decrypt } from '@/lib/crypto'
 import { useAuthStore } from '@/store/authStore'
@@ -46,12 +46,6 @@ interface AddonStore {
     installUrl: string,
     tags?: string[],
     existingManifest?: AddonManifest
-  ) => Promise<string>
-  cloneFromAccount: (
-    accountId: string,
-    addonId: string,
-    name: string,
-    tags?: string[]
   ) => Promise<string>
   updateSavedAddon: (
     id: string,
@@ -152,19 +146,11 @@ export const useAddonStore = create<AddonStore>((set, get) => ({
   createSavedAddon: async (name, installUrl, tags = [], existingManifest) => {
     set({ loading: true, error: null })
     try {
-      let manifest: AddonManifest
-
-      if (existingManifest) {
-        // Use the provided manifest (e.g., from an installed addon)
-        manifest = existingManifest
-      } else {
-        // Validate URL and fetch manifest
-        const validation = await validateAddonUrl(installUrl)
-        if (!validation.valid || !validation.manifest) {
-          throw new Error(validation.error || 'Invalid addon URL')
-        }
-        manifest = validation.manifest.manifest
+      if (!existingManifest) {
+        throw new Error('Existing manifest is required to create a saved addon')
       }
+
+      const manifest = existingManifest
 
       // Normalize tags
       const normalizedTags = tags.map(normalizeTagName).filter(Boolean)
@@ -194,55 +180,6 @@ export const useAddonStore = create<AddonStore>((set, get) => ({
     }
   },
 
-  cloneFromAccount: async (accountId, addonId, name, tags = []) => {
-    set({ loading: true, error: null })
-    try {
-      // Find the addon in the account state
-      const state = get().accountStates[accountId]
-      if (!state) {
-        throw new Error('Account state not found')
-      }
-
-      const installedAddon = state.installedAddons.find((a) => a.addonId === addonId)
-      if (!installedAddon) {
-        throw new Error('Addon not found in account')
-      }
-
-      // Validate URL and fetch manifest
-      const validation = await validateAddonUrl(installedAddon.installUrl)
-      if (!validation.valid || !validation.manifest) {
-        throw new Error(validation.error || 'Invalid addon URL')
-      }
-
-      // Normalize tags
-      const normalizedTags = tags.map(normalizeTagName).filter(Boolean)
-
-      const savedAddon: SavedAddon = {
-        id: crypto.randomUUID(),
-        name: name.trim(),
-        installUrl: installedAddon.installUrl,
-        manifest: validation.manifest.manifest,
-        tags: normalizedTags,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        sourceType: 'cloned-from-account',
-        sourceAccountId: accountId,
-      }
-
-      const library = { ...get().library, [savedAddon.id]: savedAddon }
-      set({ library })
-
-      await saveAddonLibrary(library)
-      return savedAddon.id
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to clone saved addon'
-      set({ error: message })
-      throw error
-    } finally {
-      set({ loading: false })
-    }
-  },
-
   updateSavedAddon: async (id, updates) => {
     set({ loading: true, error: null })
     try {
@@ -252,16 +189,6 @@ export const useAddonStore = create<AddonStore>((set, get) => ({
       }
 
       const updatedSavedAddon = { ...savedAddon }
-
-      // If URL is being updated, validate and fetch new manifest
-      if (updates.installUrl && updates.installUrl !== savedAddon.installUrl) {
-        const validation = await validateAddonUrl(updates.installUrl)
-        if (!validation.valid || !validation.manifest) {
-          throw new Error(validation.error || 'Invalid addon URL')
-        }
-        updatedSavedAddon.installUrl = updates.installUrl
-        updatedSavedAddon.manifest = validation.manifest.manifest
-      }
 
       // Update other fields
       if (updates.name !== undefined) {

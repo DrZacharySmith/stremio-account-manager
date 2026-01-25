@@ -1,12 +1,10 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { useAddonStore } from '@/store/addonStore'
 import { getHealthSummary } from '@/lib/addon-health'
 import { useEffect, useMemo, useState } from 'react'
 import { SavedAddonCard } from './SavedAddonCard'
-import { SavedAddonForm } from './SavedAddonForm'
 import { RefreshCw } from 'lucide-react'
 
 export function SavedAddonLibrary() {
@@ -14,7 +12,6 @@ export function SavedAddonLibrary() {
     useAddonStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
 
   useEffect(() => {
     const init = async () => {
@@ -112,25 +109,11 @@ export function SavedAddonLibrary() {
               <RefreshCw className={`h-4 w-4 ${checkingHealth ? 'animate-spin' : ''}`} />
             </Button>
           )}
-          <Button onClick={() => setShowCreateDialog(true)} className="flex-1 sm:flex-none">
-            New Saved Addon
-          </Button>
         </div>
       </div>
 
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Create Saved Addon</DialogTitle>
-          </DialogHeader>
-          <SavedAddonForm
-            onSuccess={() => setShowCreateDialog(false)}
-            onCancel={() => setShowCreateDialog(false)}
-          />
-        </DialogContent>
-      </Dialog>
-
       {/* Error Display */}
+
       {error && (
         <Card className="border-red-500">
           <CardContent className="pt-6">
@@ -207,9 +190,9 @@ export function SavedAddonLibrary() {
               <div>
                 <p className="text-lg font-medium mb-2">No saved addons yet</p>
                 <p className="text-muted-foreground mb-4">
-                  Create your first saved addon to get started
+                  To add an addon to your library, go to an <strong>Account</strong> page and click
+                  <strong> "Save to Library"</strong> on an installed addon.
                 </p>
-                <Button onClick={() => setShowCreateDialog(true)}>Create Saved Addon</Button>
               </div>
             )}
           </CardContent>

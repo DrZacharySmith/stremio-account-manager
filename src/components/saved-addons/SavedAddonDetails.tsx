@@ -25,9 +25,7 @@ export function SavedAddonDetails({ savedAddon, onClose }: SavedAddonDetailsProp
   const [formError, setFormError] = useState<string | null>(null)
 
   const hasChanges =
-    formData.name !== savedAddon.name ||
-    formData.tags !== savedAddon.tags.join(', ') ||
-    formData.installUrl !== savedAddon.installUrl
+    formData.name !== savedAddon.name || formData.tags !== savedAddon.tags.join(', ')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,9 +92,12 @@ export function SavedAddonDetails({ savedAddon, onClose }: SavedAddonDetailsProp
             id="edit-url"
             type={isPrivacyModeEnabled ? 'password' : 'url'}
             value={formData.installUrl}
-            onChange={(e) => setFormData((prev) => ({ ...prev, installUrl: e.target.value }))}
-            required
+            readOnly
+            className="bg-muted cursor-not-allowed"
           />
+          <p className="text-xs text-muted-foreground">
+            The URL cannot be changed manually due to CORS restrictions.
+          </p>
         </div>
 
         {/* Manifest Info */}
