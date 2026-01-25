@@ -61,11 +61,15 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   /**
    * Set up master password for the first time
    * Generates salt, hashes password, stores both, and derives encryption key
+   * Wipes any existing data to prevent decryption issues
    */
   setupMasterPassword: async (password: string) => {
     if (password.length < 8) {
       throw new Error('Password must be at least 8 characters')
     }
+
+    // Wipe any existing data (could be from old encryption system)
+    await wipeAllData()
 
     // Generate and save salt
     const salt = generateSalt()
