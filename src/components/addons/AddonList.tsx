@@ -48,6 +48,9 @@ export function AddonList({ accountId }: AddonListProps) {
 
     setCheckingUpdates(true)
     try {
+      // First sync account to get the latest addons from the server
+      await syncAccount(accountId)
+
       const updateInfoList = await checkAddonUpdates(addons)
       const versions: Record<string, string> = {}
       updateInfoList.forEach((info) => {
@@ -57,7 +60,7 @@ export function AddonList({ accountId }: AddonListProps) {
 
       const updatesCount = updateInfoList.filter((info) => info.hasUpdate).length
       toast({
-        title: 'Update Check Complete',
+        title: 'Refresh Complete',
         description:
           updatesCount > 0
             ? `${updatesCount} addon${updatesCount !== 1 ? 's have' : ' has'} updates available`
@@ -65,14 +68,14 @@ export function AddonList({ accountId }: AddonListProps) {
       })
     } catch (error) {
       toast({
-        title: 'Check Failed',
-        description: 'Failed to check for updates',
+        title: 'Refresh Failed',
+        description: 'Failed to refresh addons',
         variant: 'destructive',
       })
     } finally {
       setCheckingUpdates(false)
     }
-  }, [account, encryptionKey, addons, toast, updateLatestVersions])
+  }, [account, encryptionKey, addons, toast, updateLatestVersions, syncAccount, accountId])
 
   const handleUpdateAddon = useCallback(
     async (_accountId: string, addonId: string) => {
@@ -179,9 +182,9 @@ export function AddonList({ accountId }: AddonListProps) {
           >
             <RefreshCw className={`h-4 w-4 ${checkingUpdates ? 'animate-spin' : ''}`} />
             <span className="hidden xs:inline">
-              {checkingUpdates ? 'Checking...' : 'Check Updates'}
+              {checkingUpdates ? 'Refreshing...' : 'Refresh'}
             </span>
-            <span className="inline xs:hidden">{checkingUpdates ? '...' : 'Updates'}</span>
+            <span className="inline xs:hidden">{checkingUpdates ? '...' : 'Refresh'}</span>
           </Button>
           {updatesAvailable.length > 0 && (
             <Button
@@ -192,10 +195,10 @@ export function AddonList({ accountId }: AddonListProps) {
             >
               <RefreshCw className={`h-4 w-4 ${updatingAll ? 'animate-spin' : ''}`} />
               <span className="hidden xs:inline">
-                {updatingAll ? 'Updating...' : `Update All (${updatesAvailable.length})`}
+                {updatingAll ? 'Updating...' : `Update (${updatesAvailable.length})`}
               </span>
               <span className="inline xs:hidden">
-                {updatingAll ? '...' : `All (${updatesAvailable.length})`}
+                {updatingAll ? '...' : `(${updatesAvailable.length})`}
               </span>
             </Button>
           )}
