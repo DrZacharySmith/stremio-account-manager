@@ -153,8 +153,10 @@ export class StremioClient {
     }
 
     // Use allorigins proxy to avoid CORS issues
-    // Add a unique timestamp to bypass both browser and proxy caches without triggering CORS preflights
-    const cacheBuster = `cb=${Date.now()}`
+    // Add a 5-minute cache buster (300000ms = 5 minutes)
+    // All requests within the same 5 minute window will use the same cache value
+    const fiveMinuteInterval = Math.floor(Date.now() / 300000)
+    const cacheBuster = `cb=${fiveMinuteInterval}`
     const separator = manifestUrl.includes('?') ? '&' : '?'
     const finalManifestUrl = `${manifestUrl}${separator}${cacheBuster}`
     const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(finalManifestUrl)}`
