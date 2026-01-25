@@ -4,6 +4,10 @@ A client-side React SPA for managing multiple Stremio accounts and their addons.
 
 > ⚠️ **Disclaimer**: This is an **unofficial tool** and is not affiliated with Stremio. Use at your own risk. Always keep backups of your important data.
 
+## Demo
+
+https://github.com/user-attachments/assets/a0d7b566-e830-4142-bb32-1f575b52e6fb
+
 ## Features
 
 - Client-side only - All data stored locally with encrypted credentials (no cloud storage)
