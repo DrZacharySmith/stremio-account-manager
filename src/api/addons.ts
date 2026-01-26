@@ -1,5 +1,6 @@
 import { AddonDescriptor } from '@/types/addon'
 import { stremioClient } from './stremio-client'
+import { checkAddonHealth } from '@/lib/addon-health'
 
 export async function getAddons(authKey: string): Promise<AddonDescriptor[]> {
   return stremioClient.getAddonCollection(authKey)
@@ -133,6 +134,7 @@ export interface AddonUpdateInfo {
   installedVersion: string
   latestVersion: string
   hasUpdate: boolean
+  isOnline: boolean
 }
 
 /**
@@ -152,11 +154,16 @@ export async function checkAddonUpdates(addons: AddonDescriptor[]): Promise<Addo
 
   for (const addon of checkableAddons) {
     try {
-      const latestManifest = await stremioClient.fetchAddonManifest(addon.transportUrl)
+      // Check both addon health and version in parallel
+      const [latestManifest, isOnline] = await Promise.all([
+        stremioClient.fetchAddonManifest(addon.transportUrl),
+        checkAddonHealth(addon.transportUrl),
+      ])
+
       const hasUpdate = latestManifest.manifest.version !== addon.manifest.version
 
       console.log(
-        `[Update Check] ${addon.manifest.name}: installed=${addon.manifest.version}, latest=${latestManifest.manifest.version}, hasUpdate=${hasUpdate}`
+        `[Update Check] ${addon.manifest.name}: installed=${addon.manifest.version}, latest=${latestManifest.manifest.version}, hasUpdate=${hasUpdate}, isOnline=${isOnline}`
       )
 
       results.push({
@@ -166,6 +173,7 @@ export async function checkAddonUpdates(addons: AddonDescriptor[]): Promise<Addo
         installedVersion: addon.manifest.version,
         latestVersion: latestManifest.manifest.version,
         hasUpdate,
+        isOnline,
       })
     } catch (error) {
       console.warn(`[Update Check] Failed to check ${addon.manifest.name}:`, error)
@@ -196,11 +204,16 @@ export async function checkSavedAddonUpdates(
 
   for (const addon of savedAddons) {
     try {
-      const latestManifest = await stremioClient.fetchAddonManifest(addon.installUrl)
+      // Check both addon health and version in parallel
+      const [latestManifest, isOnline] = await Promise.all([
+        stremioClient.fetchAddonManifest(addon.installUrl),
+        checkAddonHealth(addon.installUrl),
+      ])
+
       const hasUpdate = latestManifest.manifest.version !== addon.manifest.version
 
       console.log(
-        `[Update Check] ${addon.name}: installed=${addon.manifest.version}, latest=${latestManifest.manifest.version}, hasUpdate=${hasUpdate}`
+        `[Update Check] ${addon.name}: installed=${addon.manifest.version}, latest=${latestManifest.manifest.version}, hasUpdate=${hasUpdate}, isOnline=${isOnline}`
       )
 
       results.push({
@@ -210,6 +223,7 @@ export async function checkSavedAddonUpdates(
         installedVersion: addon.manifest.version,
         latestVersion: latestManifest.manifest.version,
         hasUpdate,
+        isOnline,
       })
     } catch (error) {
       console.warn(`[Update Check] Failed to check ${addon.name}:`, error)

@@ -59,12 +59,21 @@ export function AddonList({ accountId }: AddonListProps) {
       updateLatestVersions(versions)
 
       const updatesCount = updateInfoList.filter((info) => info.hasUpdate).length
+      const offlineCount = updateInfoList.filter((info) => !info.isOnline).length
+
+      let description = ''
+      if (updatesCount > 0) {
+        description = `${updatesCount} addon${updatesCount !== 1 ? 's have' : ' has'} updates available`
+      } else {
+        description = 'All addons are up to date'
+      }
+      if (offlineCount > 0) {
+        description += `. ${offlineCount} addon${offlineCount !== 1 ? 's are' : ' is'} offline`
+      }
+
       toast({
         title: 'Refresh Complete',
-        description:
-          updatesCount > 0
-            ? `${updatesCount} addon${updatesCount !== 1 ? 's have' : ' has'} updates available`
-            : 'All addons are up to date',
+        description,
       })
     } catch (error) {
       toast({
