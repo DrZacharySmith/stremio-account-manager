@@ -188,23 +188,24 @@ export function FAQPage() {
                 they cannot be removed.
               </p>
               <p>
-                Usually, people interested in removing protected addons are interested in removing
-                Cinemeta. If you want to remove Cinemeta, you can refer to{' '}
-                <a
-                  href="https://cinebye.elfhosted.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  https://cinebye.elfhosted.com/
-                </a>{' '}
-                for a solution.
+                <strong>However</strong>, for Cinemeta specifically, you can customize its behavior
+                using the built-in configuration feature. Click the "Configure" button on the
+                Cinemeta addon card to:
+              </p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>Remove search artifacts (search catalogs and search functionality)</li>
+                <li>Remove standard catalogs (Popular, New, Featured)</li>
+                <li>Remove the metadata resource</li>
+              </ul>
+              <p>
+                This allows you to reduce Cinemeta's presence without breaking Stremio's core
+                functionality. You can always reset Cinemeta to its original configuration using the
+                "Reset to Original" button in the configuration dialog.
               </p>
               <p>
-                If you don't want to risk breaking Stremio's core functionality, a reasonable
-                alternative is to move the addon to the bottom of the list; however, there could be
-                unexpected issues with this approach, although these haven't been observed yet in
-                normal usage.
+                For other protected addons, a reasonable alternative is to move the addon to the
+                bottom of the list; however, there could be unexpected issues with this approach,
+                although these haven't been observed yet in normal usage.
               </p>
             </div>
           </CardContent>

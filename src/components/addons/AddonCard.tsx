@@ -23,12 +23,16 @@ import { getStremioLink, maskUrl } from '@/lib/utils'
 import { useAddonStore } from '@/store/addonStore'
 import { useUIStore } from '@/store/uiStore'
 import { AddonDescriptor } from '@/types/addon'
-import { Copy, ExternalLink, RefreshCw } from 'lucide-react'
+import { Copy, ExternalLink, RefreshCw, Settings } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { CinemetaConfigurationDialog } from './CinemetaConfigurationDialog'
+import { isCinemetaAddon, detectAllPatches } from '@/lib/cinemeta-utils'
+import { CinemetaManifest } from '@/types/cinemeta'
 
 interface AddonCardProps {
   addon: AddonDescriptor
   accountId: string
+  accountAuthKey: string
   onRemove: (accountId: string, addonId: string) => void
   onUpdate?: (accountId: string, addonId: string) => Promise<void>
   latestVersion?: string
@@ -38,6 +42,7 @@ interface AddonCardProps {
 export function AddonCard({
   addon,
   accountId,
+  accountAuthKey,
   onRemove,
   onUpdate,
   latestVersion,
@@ -53,6 +58,7 @@ export function AddonCard({
   const [saveName, setSaveName] = useState('')
   const [saveTags, setSaveTags] = useState('')
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [showConfigDialog, setShowConfigDialog] = useState(false)
 
   const handleRemove = () => {
     setShowRemoveDialog(true)
@@ -77,6 +83,18 @@ export function AddonCard({
 
   const hasUpdate = latestVersion ? latestVersion !== addon.manifest.version : false
   const canUpdate = !addon.flags?.protected && onUpdate
+
+  const isCinemeta = useMemo(() => isCinemetaAddon(addon), [addon])
+
+  const cinemetaPatches = useMemo(() => {
+    if (!isCinemeta) return null
+    const patches = detectAllPatches(addon.manifest as CinemetaManifest)
+    const hasAnyPatches =
+      patches.searchArtifactsPatched ||
+      patches.standardCatalogsPatched ||
+      patches.metaResourcePatched
+    return hasAnyPatches ? patches : null
+  }, [isCinemeta, addon.manifest])
 
   const openSaveModal = () => {
     setSaveName(addon.manifest.name)
@@ -172,6 +190,11 @@ export function AddonCard({
                     {addon.flags?.protected ? 'Protected' : 'Official'}
                   </span>
                 )}
+                {cinemetaPatches && (
+                  <span className="ml-2 text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 px-2 py-1 rounded-md">
+                    Patched
+                  </span>
+                )}
               </CardTitle>
               <CardDescription className="text-xs flex items-center gap-2">
                 v{addon.manifest.version}
@@ -220,6 +243,18 @@ export function AddonCard({
               className="w-full"
             >
               Save to Library
+            </Button>
+          )}
+          {isCinemeta && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowConfigDialog(true)}
+              disabled={loading}
+              className="w-full"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Configure
             </Button>
           )}
           {canUpdate && (
@@ -303,6 +338,17 @@ export function AddonCard({
         isDestructive={true}
         onConfirm={handleConfirmRemove}
       />
+
+      {/* Cinemeta Configuration Dialog */}
+      {isCinemeta && (
+        <CinemetaConfigurationDialog
+          open={showConfigDialog}
+          onOpenChange={setShowConfigDialog}
+          addon={addon}
+          accountId={accountId}
+          accountAuthKey={accountAuthKey}
+        />
+      )}
     </>
   )
 }

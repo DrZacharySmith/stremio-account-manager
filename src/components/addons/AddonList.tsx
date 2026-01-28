@@ -255,6 +255,7 @@ export function AddonList({ accountId }: AddonListProps) {
               key={addon.manifest.id}
               addon={addon}
               accountId={accountId}
+              accountAuthKey={account?.authKey || ''}
               onRemove={removeAddon}
               onUpdate={handleUpdateAddon}
               latestVersion={latestVersions[addon.manifest.id]}
