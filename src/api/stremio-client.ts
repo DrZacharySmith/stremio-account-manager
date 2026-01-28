@@ -137,8 +137,15 @@ export class StremioClient {
   }
 
   /**
+   * Domains that should be fetched directly without using the proxy
+   * Add domains here that have proper CORS headers or are official Stremio services
+   */
+  private readonly DIRECT_FETCH_DOMAINS = ['v3-cinemeta.strem.io', 'cinemeta.strem.io', 'strem.io']
+
+  /**
    * Fetch addon manifest from URL
    * Uses CORS proxy to avoid cross-origin issues with addon servers
+   * Some domains (like official Stremio services) are fetched directly
    */
   async fetchAddonManifest(transportUrl: string, retries = 2): Promise<AddonDescriptor> {
     // Determine the manifest URL
@@ -152,14 +159,22 @@ export class StremioClient {
         : `${transportUrl}/manifest.json`
     }
 
-    // Use allorigins proxy to avoid CORS issues
+    // Check if this URL should be fetched directly (skip proxy for allowed domains)
+    const shouldFetchDirectly = this.DIRECT_FETCH_DOMAINS.some((domain) =>
+      manifestUrl.includes(domain)
+    )
+
     // Add a 5-minute cache buster (300000ms = 5 minutes)
     // All requests within the same 5 minute window will use the same cache value
     const fiveMinuteInterval = Math.floor(Date.now() / 300000)
     const cacheBuster = `cb=${fiveMinuteInterval}`
     const separator = manifestUrl.includes('?') ? '&' : '?'
     const finalManifestUrl = `${manifestUrl}${separator}${cacheBuster}`
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(finalManifestUrl)}`
+
+    // Use proxy only for URLs that need it (most addon servers don't have CORS headers)
+    const fetchUrl = shouldFetchDirectly
+      ? finalManifestUrl
+      : `https://api.allorigins.win/raw?url=${encodeURIComponent(finalManifestUrl)}`
 
     let lastError: unknown
     for (let i = 0; i <= retries; i++) {
@@ -169,10 +184,12 @@ export class StremioClient {
           // Small delay before retry
           await new Promise((resolve) => setTimeout(resolve, 1000 * i))
         } else {
-          console.log(`[Manifest Fetch] Fetching via proxy: ${manifestUrl}`)
+          console.log(
+            `[Manifest Fetch] Fetching ${shouldFetchDirectly ? 'directly' : 'via proxy'}: ${manifestUrl}`
+          )
         }
 
-        const response = await axios.get(proxyUrl, {
+        const response = await axios.get(fetchUrl, {
           timeout: 5000,
         })
 
